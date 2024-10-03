@@ -5,6 +5,10 @@ inputs:
     description: 'The current repository in the format owner/repo'
     required: true
     default: ${{ github.repository }}
+  ref:
+    description: 'The current branch or tag in the format branch/tag'
+    required: true
+    default: ${{ github.ref_name }}
 
 runs:
   using: "composite"
@@ -13,9 +17,7 @@ runs:
       shell: bash
       run: |
         echo "Repository: ${{ inputs.repo }}"
-        IFS='/' read -r owner repo <<< "${{ inputs.repo }}"
-        echo "Owner: $owner"
-        echo "Repo Name: $repo"
+        echo "Ref: ${{ inputs.ref }}"
 
     - name: Get Additional Repo Info
       shell: bash
@@ -28,9 +30,3 @@ outputs:
   repo_full_name:
     description: "The full name of the repository"
     value: ${{ inputs.repo }}
-  repo_owner:
-    description: "The owner of the repository"
-    value: ${{ steps.split_repo.outputs.owner }}
-  repo_name:
-    description: "The name of the repository"
-    value: ${{ steps.split_repo.outputs.repo }}
