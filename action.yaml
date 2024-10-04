@@ -32,8 +32,8 @@ runs:
         RESPONSE=$(curl -X POST http://localhost:5000/api/hack \
         -H "Content-Type: application/json" \
         -d '{"repo_url": "https://github.com/${{ github.repository }}"}')
-        echo "Response from API:"
-        echo "$RESPONSE"
+        # echo "Response from API:"
+        # echo "$RESPONSE"
         
         # Extract bug entries from JSON response
         echo "$RESPONSE" | grep -oP 'data:\{"bug_id":[0-9]+,"bug_title":"[^"]*"\}' | while read -r line; do
