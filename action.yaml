@@ -33,7 +33,6 @@ runs:
         echo "Repository URL: https://github.com/${{ github.repository }}"
 
     - name: Hack the contract
-      if: ${{ inputs.debug == 'false' }}
       shell: bash
       run: |
         # Process the response using Python
