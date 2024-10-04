@@ -35,35 +35,35 @@ runs:
         
         # Process the response using Python
         python3 <<EOF
-import json
-import re
+        import json
+        import re
 
-response = """$RESPONSE"""
+        response = """$RESPONSE"""
 
-# Split the response into individual data entries
-data_entries = re.split(r'(?=^data: )', response, flags=re.MULTILINE)
+        # Split the response into individual data entries
+        data_entries = re.split(r'(?=^data: )', response, flags=re.MULTILINE)
 
-# Process each data entry
-json_objects = []
-for entry in data_entries:
-    if entry.startswith('data: '):
-        # Remove the 'data: ' prefix and parse as JSON
-        json_str = entry[6:].strip()
-        try:
-            json_obj = json.loads(json_str)
-            json_objects.append(json_obj)
-        except json.JSONDecodeError:
-            print(f"Failed to parse JSON: {json_str}")
+        # Process each data entry
+        json_objects = []
+        for entry in data_entries:
+            if entry.startswith('data: '):
+                # Remove the 'data: ' prefix and parse as JSON
+                json_str = entry[6:].strip()
+                try:
+                    json_obj = json.loads(json_str)
+                    json_objects.append(json_obj)
+                except json.JSONDecodeError:
+                    print(f"Failed to parse JSON: {json_str}")
 
-# Write the JSON array to a file
-with open('response.json', 'w') as f:
-    json.dump(json_objects, f, indent=2)
+        # Write the JSON array to a file
+        with open('response.json', 'w') as f:
+            json.dump(json_objects, f, indent=2)
 
-print("Response saved to response.json")
-print("Contents of response.json:")
-with open('response.json', 'r') as f:
-    print(f.read())
-EOF
+        print("Response saved to response.json")
+        print("Contents of response.json:")
+        with open('response.json', 'r') as f:
+            print(f.read())
+        EOF
 
     - name: Extract markdown from response.json
       shell: bash
@@ -78,7 +78,7 @@ EOF
           echo
         done > results.md
         
-        echo "Markdown content extracted from bugs.json and saved to results.md"
+        echo "Markdown content extracted from response.json and saved to results.md"
     # - name: Run script
     #   shell: bash
     #   run: |
