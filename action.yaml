@@ -24,6 +24,7 @@ runs:
         echo "Current Branch: ${{ github.ref_name }}"
         echo "Workflow Triggering Event: ${{ github.event_name }}"
         echo "Action Running On: ${{ runner.os }}"
+        echo "Repository URL: https://github.com/${{ github.repository }}"
 
     - name: Run script
       shell: bash
