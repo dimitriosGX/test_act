@@ -32,27 +32,43 @@ runs:
         RESPONSE=$(curl -X POST http://localhost:5000/api/hack \
         -H "Content-Type: application/json" \
         -d '{"repo_url": "https://github.com/${{ github.repository }}"}')
-        # echo "Response from API:"
-        # echo "$RESPONSE"
         
-        # Extract bug entries from JSON response
-        echo "$RESPONSE" | grep -oP 'data:\{"bug_id":[0-9]+,"bug_title":"[^"]*"\}' | while read -r line; do
-          echo "${line#data:}"
-        done > bugs.json
+        # Process the response and create a JSON array
+        JSON_ARRAY=$(echo "$RESPONSE" | awk '
+          BEGIN { print "[" }
+          /^data: / {
+            if (data) {
+              print data ",";
+            }
+            data = substr($0, 7);
+          }
+          !/^data: / {
+            if (data) {
+              data = data "\n" $0;
+            }
+          }
+          END {
+            if (data) {
+              print data;
+            }
+            print "]";
+          }
+        ')
         
-        echo "Extracted bug entries saved to bugs.json"
+        echo "$JSON_ARRAY" > response.json
         
-        echo "Contents of bugs.json:"
-        cat bugs.json
+        echo "Response saved to response.json"
+        echo "Contents of response.json:"
+        cat response.json
 
-    - name: Extract markdown from bugs.json
+    - name: Extract markdown from response.json
       shell: bash
       run: |
-        # Extract markdown content from bugs.json
-        jq -r '.bug_title' bugs.json | while read -r title; do
+        # Extract markdown content from response.json
+        jq -r '.bug_title' response.json | while read -r title; do
           echo "# $title"
           echo
-          jq -r --arg title "$title" 'select(.bug_title == $title) | .bug_description' bugs.json
+          jq -r --arg title "$title" 'select(.bug_title == $title) | .bug_description' response.json
           echo
           echo "---"
           echo
