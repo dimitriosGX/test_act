@@ -66,12 +66,14 @@ runs:
             # Append each result to a JSON file
             with open('results.json', 'w') as f:
                 json.dump(results, f, indent=2)
-            # Dump results to a variable for output
-            results_json = json.dumps(results)
-            print(f"::set-output name=hack_results::{results_json}")
 
-        asyncio.run(main())
-        EOF
+            return results
+
+        results = asyncio.run(main())
+        github_output = os.environ.get('GITHUB_OUTPUT')
+        if github_output:
+            with open(github_output, 'a') as f:
+                f.write(f"hack_results<<EOF\n{json.dumps(results)}\nEOF\n")
 
 outputs:
   hack_results:
