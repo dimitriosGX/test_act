@@ -26,12 +26,23 @@ runs:
         echo "Action Running On: ${{ runner.os }}"
         echo "Repository URL: https://github.com/${{ github.repository }}"
 
-    - name: Run script
+    - name: Get results from curl call
       shell: bash
       run: |
-        curl -X POST http://localhost:5000/api/hack \
+        RESPONSE=$(curl -X POST http://localhost:5000/api/hack \
         -H "Content-Type: application/json" \
-        -d '{"repo_url": "https://github.com/${{ github.repository }}"}'
+        -d '{"repo_url": "https://github.com/${{ github.repository }}"}')
+        echo "Response from API:"
+        echo "$RESPONSE"
+        
+        # Extract markdown content from JSON response
+        MARKDOWN=$(echo "$RESPONSE" | jq -r '.markdown_content')
+        echo "Extracted Markdown content:"
+        echo "$MARKDOWN"
+        
+        # Save markdown content to a file
+        echo "$MARKDOWN" > results.md
+        echo "Markdown content saved to results.md"
     # - name: Run script
     #   shell: bash
     #   run: |
