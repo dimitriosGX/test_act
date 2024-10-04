@@ -42,6 +42,12 @@ runs:
         
         echo "Extracted bug entries saved to bugs.json"
         
+        echo "Contents of bugs.json:"
+        cat bugs.json
+
+    - name: Extract markdown from bugs.json
+      shell: bash
+      run: |
         # Extract markdown content from bugs.json
         jq -r '.bug_title' bugs.json | while read -r title; do
           echo "# $title"
