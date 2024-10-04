@@ -1,6 +1,12 @@
 name: 'Repository Info Action'
 description: 'Get information about the current repository'
 
+inputs:
+  save_results:
+    description: 'Save the results to a file'
+    required: false
+    default: 'false'
+
 runs:
   using: "composite"
   steps:
@@ -26,66 +32,47 @@ runs:
         echo "Action Running On: ${{ runner.os }}"
         echo "Repository URL: https://github.com/${{ github.repository }}"
 
-    - name: Get results from curl call
+    - name: Hack the contract
+      if: ${{ inputs.debug == 'false' }}
       shell: bash
       run: |
-        RESPONSE=$(curl -X POST http://localhost:5000/api/hack \
-        -H "Content-Type: application/json" \
-        -d '{"repo_url": "https://github.com/${{ github.repository }}"}')
-        
         # Process the response using Python
         python3 <<EOF
-        import json
-        import re
+        async def make_request(session, url, data):
+            async with session.post(url, json=data, headers={"Content-Type": "application/json"}) as response:
+                return await response.text()
 
-        response = """$RESPONSE"""
+        async def process_ndjson(ndjson_str):
+            results = []
+            for line in ndjson_str.strip().split('\n'):
+                if line.startswith('data: '):
+                    try:
+                        json_str = line[5:].strip()  # Remove 'data: ' prefix
+                        json_obj = json.loads(json_str)
+                        results.append(json_obj)
+                    except json.JSONDecodeError:
+                        print(f"Failed to parse JSON: {json_str}")
+            return results
 
-        # Split the response into individual data entries
-        data_entries = re.split(r'(?=^data: )', response, flags=re.MULTILINE)
+        async def main():
+            url = "http://localhost:5000/api/hack"
+            data = {"repo_url": "https://github.com/${{ github.repository }}"}
 
-        # Process each data entry
-        json_objects = []
-        for entry in data_entries:
-            if entry.startswith('data: '):
-                # Remove the 'data: ' prefix and parse as JSON
-                json_str = entry[6:].strip()
-                try:
-                    json_obj = json.loads(json_str)
-                    json_objects.append(json_obj)
-                except json.JSONDecodeError:
-                    print(f"Failed to parse JSON: {json_str}")
+            async with aiohttp.ClientSession() as session:
+                response_text = await make_request(session, url, data)
+                results = await process_ndjson(response_text)
 
-        # Write the JSON array to a file
-        with open('response.json', 'w') as f:
-            json.dump(json_objects, f, indent=2)
+            # Append each result to a JSON file
+            with open('results.json', 'w') as f:
+                json.dump(results, f, indent=2)
+            # Dump results to a variable for output
+            results_json = json.dumps(results)
+            print(f"::set-output name=hack_results::{results_json}")
 
-        print("Response saved to response.json")
-        print("Contents of response.json:")
-        with open('response.json', 'r') as f:
-            print(f.read())
+        asyncio.run(main())
         EOF
 
-    - name: Extract markdown from response.json
-      shell: bash
-      run: |
-        # Extract markdown content from response.json
-        jq -r '.bug_title' response.json | while read -r title; do
-          echo "# $title"
-          echo
-          jq -r --arg title "$title" 'select(.bug_title == $title) | .bug_description' response.json
-          echo
-          echo "---"
-          echo
-        done > results.md
-        
-        echo "Markdown content extracted from response.json and saved to results.md"
-    # - name: Run script
-    #   shell: bash
-    #   run: |
-    #     python3 dist/index.py
-
-
 outputs:
-  repo_full_name:
-    description: "The full name of the repository"
-    value: ${{ github.repository }}
+  hack_results:
+    description: "The results of the hack"
+    value: ${{ steps.hack_results.outputs.hack_results }}
