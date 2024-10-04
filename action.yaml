@@ -35,14 +35,24 @@ runs:
         echo "Response from API:"
         echo "$RESPONSE"
         
-        # Extract markdown content from JSON response
-        MARKDOWN=$(echo "$RESPONSE" | jq -r '.markdown_content')
-        echo "Extracted Markdown content:"
-        echo "$MARKDOWN"
+        # Extract bug entries from JSON response
+        echo "$RESPONSE" | grep -oP 'data:\{"bug_id":[0-9]+,"bug_title":"[^"]*"\}' | while read -r line; do
+          echo "${line#data:}"
+        done > bugs.json
         
-        # Save markdown content to a file
-        echo "$MARKDOWN" > results.md
-        echo "Markdown content saved to results.md"
+        echo "Extracted bug entries saved to bugs.json"
+        
+        # Extract markdown content from bugs.json
+        jq -r '.bug_title' bugs.json | while read -r title; do
+          echo "# $title"
+          echo
+          jq -r --arg title "$title" 'select(.bug_title == $title) | .bug_description' bugs.json
+          echo
+          echo "---"
+          echo
+        done > results.md
+        
+        echo "Markdown content extracted from bugs.json and saved to results.md"
     # - name: Run script
     #   shell: bash
     #   run: |
