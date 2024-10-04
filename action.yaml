@@ -31,7 +31,7 @@ runs:
       run: |
         curl -X POST http://localhost:5000/api/hack \
         -H "Content-Type: application/json" \
-        -d '{"repo_url": https://github.com//${{ github.repository }}'
+        -d '{"repo_url": "https://github.com//${{ github.repository }}"'
     # - name: Run script
     #   shell: bash
     #   run: |
