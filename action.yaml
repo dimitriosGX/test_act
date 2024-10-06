@@ -52,7 +52,7 @@ runs:
 
         async def main():
             url = f"http://${{ inputs.bot_address }}:${{ inputs.bot_port }}/api/hack"
-            data = {"repo_url": "https://github.com/${{ github.repository }}"}
+            data = {"repo_url": "git@github.com:${{ github.repository }}"}
 
             async with aiohttp.ClientSession() as session:
                 response_text = await make_request(session, url, data)
