@@ -77,6 +77,40 @@ runs:
         if github_output:
             with open(github_output, 'a') as f:
                 f.write(f"hack_results<<EOF\n{json.dumps(results)}\nEOF\n")
+        EOF
+
+    - name: Test transfer
+      shell: bash
+      run: |
+        echo "Transfer: zipball.zip"
+        python3 <<EOF
+        import aiohttp
+        import asyncio
+        import json
+        import os        
+        async def make_request(session, url, data):
+            async with session.post(url, json=data, headers={"Content-Type": "application/json"}) as response:
+                return await response.text()        
+
+        async def main():
+            url = f"http://${{ inputs.bot_address }}:${{ inputs.bot_port }}/api/receive_zip"
+            data = {"file": "zipball.zip"}
+
+            async with aiohttp.ClientSession() as session:
+                response_text = await make_request(session, url, data)
+
+            # Append each result to a JSON file
+            with open('results.json', 'w') as f:
+                json.dump(response_text, f, indent=2)
+
+            return response_text
+
+        results = asyncio.run(main())
+        github_output = os.environ.get('GITHUB_OUTPUT')
+        if github_output:
+            with open(github_output, 'a') as f:
+                f.write(f"hack_results<<EOF\n{json.dumps(results)}\nEOF\n")
+        EOF
 
     # - name: Test access
     #   shell: bash
@@ -96,6 +130,7 @@ runs:
     #     EOF
 
     - name: Hack the contract
+      if: !always()
       shell: bash
       run: |
         # Process the response using Python
@@ -139,7 +174,7 @@ runs:
         if github_output:
             with open(github_output, 'a') as f:
                 f.write(f"hack_results<<EOF\n{json.dumps(results)}\nEOF\n")
-
+        EOF
 outputs:
   hack_results:
     description: "The results of the hack"
