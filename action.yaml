@@ -84,38 +84,12 @@ runs:
       run: |
         echo "Transfer: zipball.zip"
         python3 <<EOF
-        import aiohttp
-        import asyncio
-        import json
-        import os        
-        async def make_request(session, url, data):
-            headers = {
-                "Content-Type": "application/zip",
-                "Content-Disposition": "form-data; name=file; filename=zipball.zip",
-                "Content-Transfer-Encoding": "binary"
-            }
-            async with session.post(url, data=data, headers=headers) as response:
-                return await response.text()
-
-        async def main():
-            url = f"http://${{ inputs.bot_address }}:${{ inputs.bot_port }}/api/receive_zip"
-            data = {"file": "zipball.zip"}
-
-            async with aiohttp.ClientSession() as session:
-                response_text = await make_request(session, url, data)
-
-            # Append each result to a JSON file
-            with open('results.json', 'w') as f:
-                json.dump(response_text, f, indent=2)
-
-            return response_text
-
-        results = asyncio.run(main())
-        github_output = os.environ.get('GITHUB_OUTPUT')
-        if github_output:
-            with open(github_output, 'a') as f:
-                f.write(f"hack_results<<EOF\n{json.dumps(results)}\nEOF\n")
+        import requests
+        files = {'file': open('zipball.zip', 'rb')}
+        response = requests.post(f"http://${{ inputs.bot_address }}:${{ inputs.bot_port }}/api/receive_zip", files=files)
+        print(response.text)
         EOF
+
 
     # - name: Test access
     #   shell: bash
