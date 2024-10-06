@@ -28,22 +28,22 @@ runs:
         pip install requests
         echo "TOKEN ${{ env.GITHUB_TOKEN }}"
 
-    - name: Test access
-      shell: bash
-      run: |
-        python3 <<EOF
-        import requests
-        import os
-        import json
-        response = requests.get(f"https://api.github.com/repos/${{ github.repository }}/zipball",
-                                headers={"Authorization": f"token ${{ secrets.GITHUB_TOKEN }}",
-                                         "Accept": "application/vnd.github.v3+json"},
-                                )
-        if response.status_code != 200:
-          print(f"Failed to access the bot: {response.status_code}")
-          exit(1)
-        print("Successfully accessed the bot")
-        EOF
+    # - name: Test access
+    #   shell: bash
+    #   run: |
+    #     python3 <<EOF
+    #     import requests
+    #     import os
+    #     import json
+    #     response = requests.get(f"https://api.github.com/repos/${{ github.repository }}/zipball",
+    #                             headers={"Authorization": f"token ${{ secrets.GITHUB_TOKEN }}",
+    #                                      "Accept": "application/vnd.github.v3+json"},
+    #                             )
+    #     if response.status_code != 200:
+    #       print(f"Failed to access the bot: {response.status_code}")
+    #       exit(1)
+    #     print("Successfully accessed the bot")
+    #     EOF
 
     - name: Hack the contract
       shell: bash
