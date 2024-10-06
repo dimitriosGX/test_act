@@ -14,10 +14,19 @@ inputs:
 runs:
   using: "composite"
   steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-      with:
-        token: ${{ secrets.GITHUB_TOKEN }}
+    - name: Test access
+      shell: bash
+      run: |
+        python3 <<EOF
+        import requests
+        import os
+        import json
+        response = requests.get(f"https://api.github.com/repos/${{ github.repository }}/zipball")
+        if response.status_code != 200:
+          print(f"Failed to access the bot: {response.status_code}")
+          exit(1)
+        print("Successfully accessed the bot")
+        EOF
 
     - name: Set up Python
       uses: actions/setup-python@v4
