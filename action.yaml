@@ -65,13 +65,12 @@ runs:
 
             async with aiohttp.ClientSession() as session:
                 response_text = await make_request(session, url, data)
-                results = await process_ndjson(response_text)
 
             # Append each result to a JSON file
             with open('results.json', 'w') as f:
-                json.dump(results, f, indent=2)
+                json.dump(response_text, f, indent=2)
 
-            return results
+            return response_text
 
         results = asyncio.run(main())
         github_output = os.environ.get('GITHUB_OUTPUT')
