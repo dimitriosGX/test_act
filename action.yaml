@@ -1,5 +1,5 @@
-name: 'Repository Info Action'
-description: 'Get information about the current repository'
+name: 'Hackbot CI'
+description: 'Hackbot action'
 
 inputs:
   bot_address:
