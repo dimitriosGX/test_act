@@ -27,6 +27,7 @@ runs:
         pip install aiohttp
         pip install requests
         echo "TOKEN ${{ env.GITHUB_TOKEN }}"
+        echo "Repo ${{ github.repository }}"
         echo "Address https://api.github.com/repos/${{ github.repository }}/zipball"
 
     - name: Test access
