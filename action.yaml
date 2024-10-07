@@ -30,29 +30,6 @@ runs:
         echo "Repo ${{ github.repository }}"
         echo "Address https://api.github.com/repos/${{ github.repository }}/zipball"
 
-    - name: Transfer src
-      shell: bash
-      run: |
-        echo "Compressing all files recursively into src.zip"
-        zip -r src.zip . -x "*.zip" > /dev/null 2>&1
-        if [ -f src.zip ]; then
-            echo "Operation successful"
-        else
-            echo "Error: Operation failed"
-            exit 1
-        fi
-        echo "Transfering src.zip"
-        python3 <<EOF
-        import requests
-        
-        url = f"http://${{ inputs.bot_address }}:${{ inputs.bot_port }}/api/transfer"
-        files = {'file': ('src.zip', open('src.zip', 'rb'), 'application/zip')}
-        data = {'repo_url': f"https://github.com/${{ github.repository }}"}
-        
-        response = requests.post(url, files=files, data=data)
-        print(response.text)
-        EOF
-
     - name: Hack the contract (url)
       if: true
       shell: bash
@@ -98,6 +75,30 @@ runs:
         if github_output:
             with open(github_output, 'a') as f:
                 f.write(f"hack_results<<EOF\n{json.dumps(results)}\nEOF\n")
+        EOF
+
+    - name: Transfer src
+      if: false
+      shell: bash
+      run: |
+        echo "Compressing all files recursively into src.zip"
+        zip -r src.zip . -x "*.zip" > /dev/null 2>&1
+        if [ -f src.zip ]; then
+            echo "Operation successful"
+        else
+            echo "Error: Operation failed"
+            exit 1
+        fi
+        echo "Transfering src.zip"
+        python3 <<EOF
+        import requests
+        
+        url = f"http://${{ inputs.bot_address }}:${{ inputs.bot_port }}/api/transfer"
+        files = {'file': ('src.zip', open('src.zip', 'rb'), 'application/zip')}
+        data = {'repo_url': f"https://github.com/${{ github.repository }}"}
+        
+        response = requests.post(url, files=files, data=data)
+        print(response.text)
         EOF
 
     - name: Hack the contract (local source)
