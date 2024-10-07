@@ -79,7 +79,7 @@ runs:
                 f.write(f"hack_results<<EOF\n{json.dumps(results)}\nEOF\n")
         EOF
 
-    - name: Test transfer
+    - name: Transfer src
       shell: bash
       run: |
         echo "Transfer: zipball.zip"
@@ -109,7 +109,7 @@ runs:
     #     EOF
 
     - name: Hack the contract
-      if: !always()
+      if: false
       shell: bash
       run: |
         # Process the response using Python
