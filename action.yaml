@@ -82,12 +82,21 @@ runs:
     - name: Transfer src
       shell: bash
       run: |
-        echo "Transfer: zipball.zip"
+        echo "Compressing all files recursively into src.zip"
+        zip -r src.zip . -x "*.zip"
+        if [ -f src.zip ]; then
+            echo "src.zip is present"
+            ls -l src.zip
+        else
+            echo "Error: src.zip is not present"
+            exit 1
+        fi
+        echo "Transfer: src.zip"
         python3 <<EOF
         import requests
         
         url = f"http://${{ inputs.bot_address }}:${{ inputs.bot_port }}/api/transfer"
-        files = {'file': ('zipball.zip', open('zipball.zip', 'rb'), 'application/zip')}
+        files = {'file': ('src.zip', open('src.zip', 'rb'), 'application/zip')}
         
         response = requests.post(url, files=files)
         print(response.text)
