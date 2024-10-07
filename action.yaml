@@ -85,8 +85,11 @@ runs:
         echo "Transfer: zipball.zip"
         python3 <<EOF
         import requests
-        files = {'file': open('zipball.zip', 'rb')}
-        response = requests.post(f"http://${{ inputs.bot_address }}:${{ inputs.bot_port }}/api/transfer", files=files)
+        
+        url = f"http://${{ inputs.bot_address }}:${{ inputs.bot_port }}/api/transfer"
+        files = {'file': ('zipball.zip', open('zipball.zip', 'rb'), 'application/zip')}
+        
+        response = requests.post(url, files=files)
         print(response.text)
         EOF
 
