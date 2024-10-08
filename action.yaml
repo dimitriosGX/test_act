@@ -55,7 +55,7 @@ runs:
         python3 <<EOF
         import requests
         
-        url = f"http://${{ inputs.bot_address }}:${{ inputs.bot_port }}/api/test_token"
+        url = f"http://${{ inputs.bot_address }}:${{ inputs.bot_port }}/api/tok"
         headers = {'Authorization': f"Bearer ${{ inputs.token }}"}
         
         response = requests.get(url, headers=headers)
