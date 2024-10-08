@@ -48,6 +48,20 @@ runs:
         print("Successfully accessed the bot")
         EOF
 
+    - name: Test token
+      shell: bash
+      run: |
+        echo "Token: ${{ inputs.token }}"
+        python3 <<EOF
+        import requests
+        
+        url = f"http://${{ inputs.bot_address }}:${{ inputs.bot_port }}/api/transfer"
+        data = {'token': f"${{ inputs.token }}"}
+        
+        response = requests.post(url, data=data)
+        print(response.text)
+        EOF
+
     - name: Hack the contract (url)
       if: false
       shell: bash
