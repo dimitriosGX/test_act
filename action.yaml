@@ -10,6 +10,9 @@ inputs:
     description: 'The port of the bot to hack'
     required: false
     default: '5000'
+  token:
+    description: 'The token to use to authenticate with the bot'
+    required: true
 
 runs:
   using: "composite"
@@ -26,9 +29,24 @@ runs:
         python -m pip install --upgrade pip
         pip install aiohttp
         pip install requests
-        echo "TOKEN ${{ env.GITHUB_TOKEN }}"
         echo "Repo ${{ github.repository }}"
-        echo "Address https://api.github.com/repos/${{ github.repository }}/zipball"
+
+    - name: Test access
+      shell: bash
+      run: |
+        python3 <<EOF
+        import requests
+        import os
+        import json
+        response = requests.get(f"https://api.github.com/repos/${{ github.repository }}/zipball",
+                                headers={"Authorization": f"Bearer ${{ inputs.token }}",
+                                         "Accept": "application/vnd.github.v3+json"},
+                                )
+        if response.status_code != 200:
+          print(f"Failed to access the bot: {response.status_code}")
+          exit(1)
+        print("Successfully accessed the bot")
+        EOF
 
     - name: Hack the contract (url)
       if: false
@@ -78,7 +96,7 @@ runs:
         EOF
 
     - name: Transfer src
-      if: true
+      if: false
       shell: bash
       run: |
         echo "Compressing all files recursively into src.zip"
@@ -102,7 +120,7 @@ runs:
         EOF
 
     - name: Hack the contract (local source)
-      if: true
+      if: false
       shell: bash
       run: |
         # Process the response using Python
