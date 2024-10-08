@@ -55,11 +55,12 @@ runs:
         python3 <<EOF
         import requests
         
-        url = f"http://${{ inputs.bot_address }}:${{ inputs.bot_port }}/api/transfer"
-        data = {'token': f"${{ inputs.token }}"}
+        url = f"http://${{ inputs.bot_address }}:${{ inputs.bot_port }}/api/test_token"
+        headers = {'Authorization': f"Bearer ${{ inputs.token }}"}
         
-        response = requests.post(url, data=data)
-        print(response.text)
+        response = requests.get(url, headers=headers)
+        print(f"Status code: {response.status_code}")
+        print(f"Response text: {response.text}")
         EOF
 
     - name: Hack the contract (url)
