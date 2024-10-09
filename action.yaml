@@ -27,85 +27,34 @@ runs:
           pip install aiohttp
           pip install requests
 
-    - name: Transfer src
-      if: false
-      shell: bash
-      run: |
-        echo "Compressing all files recursively into src.zip"
-        ./compress.sh
-        echo "Transfering src.zip"
-        python3 <<EOF
-        import requests
-        
-        url = f"http://${{ inputs.bot_address }}:${{ inputs.bot_port }}/api/transfer"
-        files = {'file': ('src.zip', open('src.zip', 'rb'), 'application/zip')}
-        data = {'repo_url': f"https://github.com/${{ github.repository }}"}
-        
-        response = requests.post(url, files=files, data=data)
-        print(response.text)
-        EOF
-
     - name: Hack the contract (local source)
       if: false
       shell: bash
       run: |
-        # Process the response using Python
+        ./src/compress.sh
         python3 <<EOF
-        import aiohttp
-        import asyncio
-        import json
-        import os        
-        async def make_request(session, url, data):
-            async with session.post(url, json=data, headers={"Content-Type": "application/json"}) as response:
-                return await response.text()
-
-        async def process_ndjson(ndjson_str):
-            results = []
-            for line in ndjson_str.strip().split('\n'):
-                if line.startswith('data: '):
-                    try:
-                        json_str = line[5:].strip()  # Remove 'data: ' prefix
-                        json_obj = json.loads(json_str)
-                        results.append(json_obj)
-                    except json.JSONDecodeError:
-                        print(f"Failed to parse JSON: {json_str}")
-            return results
-
-        async def main():
-            url = f"http://${{ inputs.bot_address }}:${{ inputs.bot_port }}/api/hackv2"
-            data = {"repo_url": "https://github.com/${{ github.repository }}"}
-
-            async with aiohttp.ClientSession() as session:
-                response_text = await make_request(session, url, data)
-                results = await process_ndjson(response_text)
-
-            # Append each result to a JSON file
-            with open('results.json', 'w') as f:
-                json.dump(results, f, indent=2)
-
-            return results
-
-        results = asyncio.run(main())
+        from src.bot_api import hack
+        results = hack(${{ inputs.bot_address }}, ${{ inputs.bot_port }}, ${{ inputs.token }})
         github_output = os.environ.get('GITHUB_OUTPUT')
         if github_output:
             with open(github_output, 'a') as f:
                 f.write(f"hack_results<<EOF\n{json.dumps(results)}\nEOF\n")
         EOF
 
-    - name: Test token
-      shell: bash
-      run: |
-        echo "Token: ${{ inputs.token }}"
-        python3 <<EOF
-        import requests
+    # - name: Test token
+    #   shell: bash
+    #   run: |
+    #     echo "Token: ${{ inputs.token }}"
+    #     python3 <<EOF
+    #     import requests
         
-        url = f"http://${{ inputs.bot_address }}:${{ inputs.bot_port }}/api/test_token"
-        headers = {'Authorization': f"Bearer ${{ inputs.token }}"}
+    #     url = f"http://${{ inputs.bot_address }}:${{ inputs.bot_port }}/api/test_token"
+    #     headers = {'Authorization': f"Bearer ${{ inputs.token }}"}
         
-        response = requests.get(url, headers=headers)
-        print(f"Status code: {response.status_code}")
-        print(f"Response text: {response.text}")
-        EOF
+    #     response = requests.get(url, headers=headers)
+    #     print(f"Status code: {response.status_code}")
+    #     print(f"Response text: {response.text}")
+    #     EOF
 
 outputs:
   hack_results:
