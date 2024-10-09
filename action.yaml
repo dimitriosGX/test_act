@@ -30,9 +30,9 @@ runs:
     - name: Hack the contract (local source)
       id: hack_results
       shell: bash
-      run: |        
-        PATH="${{ github.action_path }}/src/:$PATH"
-        ./execute.sh \
+      run: |       
+        export ACTION_PATH="${{ github.action_path }}"
+        $ACTION_PATH/src/execute.sh \
           ${{ inputs.bot_address }} ${{ inputs.bot_port }} ${{ inputs.token }}
 
     # - name: Test token
