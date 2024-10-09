@@ -29,7 +29,7 @@ def hack(bot_address, bot_port, token):
     async def make_request(session, url, data, headers):
         headers["Content-Type"] = "application/json"
         async with session.post(url, json=data, headers=headers) as response:
-            return await response.text()
+            return response.status, await response.text()
 
     async def process_ndjson(ndjson_str):
         results = []
@@ -49,16 +49,19 @@ def hack(bot_address, bot_port, token):
         data = {"repo_url": "https://github.com/${{ github.repository }}"}
 
         async with aiohttp.ClientSession() as session:
-            response_text = await make_request(session, url, data, headers)
-            results = await process_ndjson(response_text)
+            status, response = await make_request(session, url, data, headers)
+            results = await process_ndjson(response)
 
             # Append each result to a JSON file
         with open('results.json', 'w') as f:
             json.dump(results, f, indent=2)
 
-        return results
+        return status, results
 
-    results = asyncio.run(main())
+    status, results = asyncio.run(main())
+    if status != 200:
+        raise Exception(f"Failed: {status}: {results}")
+    
     return results
 
 if __name__ == "__main__":

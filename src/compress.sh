@@ -2,8 +2,8 @@
 
 zip -r src.zip . -x "*.zip" > /dev/null 2>&1
 if [ -f src.zip ]; then
-    echo "Operation successful"
+    echo "Compressed successfully"
 else
-    echo "Error: Operation failed"
+    echo "Error: Compression failed"
     exit 1
 fi
