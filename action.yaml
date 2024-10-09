@@ -31,9 +31,8 @@ runs:
       id: hack_contract
       shell: bash
       run: |       
-        export ACTION_PATH="${{ github.action_path }}"
         ${{ github.action_path }}/src/compress.sh
-        python3 ${{ github.action_path }}/src/bot_api.py --bot_address ${{ inputs.bot_address }} --bot_port ${{ inputs.bot_port }} --token ${{ inputs.token }}
+        python ${{ github.action_path }}/src/bot_api.py --bot_address ${{ inputs.bot_address }} --bot_port ${{ inputs.bot_port }} --token ${{ inputs.token }}
 
 outputs:
   hack_results:
