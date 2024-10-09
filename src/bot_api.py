@@ -1,3 +1,4 @@
+import os
 import aiohttp
 import asyncio
 import json
@@ -21,10 +22,8 @@ def transfer(bot_address, bot_port, token):
     data = {'repo_url': f"https://github.com/${{ github.repository }}"}
     
     response = requests.post(url, files=files, data=data, headers=headers)
-    if response.status_code == 200:
-        return True
-    else:
-        raise Exception(f"Failed: {response.status_code}")
+    if response.status_code != 200:
+        raise Exception(f"Failed: {response.status_code}: {response.text}")
 
 def hack(bot_address, bot_port, token):
     async def make_request(session, url, data, headers):
@@ -60,6 +59,7 @@ def hack(bot_address, bot_port, token):
         return results
 
     results = asyncio.run(main())
+    return results
 
 if __name__ == "__main__":
 
@@ -76,7 +76,18 @@ if __name__ == "__main__":
         exit(1)
 
     try:
-        hack(args.bot_address, args.bot_port, args.token)
+        results = hack(args.bot_address, args.bot_port, args.token)
+        
+        # Get GITHUB_OUTPUT environment variable
+        github_output = os.environ.get('GITHUB_OUTPUT')
+        
+        if github_output:
+            with open(github_output, 'a') as f:
+                f.write(f"results={json.dumps(results)}\n")
+        else:
+            print("GITHUB_OUTPUT environment variable not found.")
+            print(f"results={json.dumps(results)}\n")
+        
     except Exception as e:
         print(e)
         exit(1)

@@ -19,7 +19,7 @@ runs:
   steps:
 
     - name: Set up Python
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
         cache: 'pip' 
         python-version: '3.12'
@@ -28,17 +28,10 @@ runs:
           pip install requests
 
     - name: Hack the contract (local source)
+      id: hack_results
       shell: bash
       run: |
-        ${{ github.action_path }}/dist/compress.sh
-        python3 <<EOF
-        from ${{ github.action_path }}/dist/bot_api import hack
-        results = hack(${{ inputs.bot_address }}, ${{ inputs.bot_port }}, ${{ inputs.token }})
-        github_output = os.environ.get('GITHUB_OUTPUT')
-        if github_output:
-            with open(github_output, 'a') as f:
-                f.write(f"hack_results<<EOF\n{json.dumps(results)}\nEOF\n")
-        EOF
+        ${{ github.action_path }}/dist/execute.sh ${{ inputs.bot_address }} ${{ inputs.bot_port }} ${{ inputs.token }}
 
     # - name: Test token
     #   shell: bash
@@ -58,4 +51,4 @@ runs:
 outputs:
   hack_results:
     description: "The results of the hack"
-    value: ${{ steps.hack_results.outputs.hack_results }}
+    value: ${{ steps.hack_results.outputs.results }}
