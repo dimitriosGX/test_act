@@ -227,6 +227,22 @@ runs:
                 f.write(f"hack_results<<EOF\n{json.dumps(results)}\nEOF\n")
         EOF
 
+
+    # - name: Test token
+    #   shell: bash
+    #   run: |
+    #     echo "Token: ${{ inputs.token }}"
+    #     python3 <<EOF
+    #     import requests
+        
+    #     url = f"http://${{ inputs.bot_address }}:${{ inputs.bot_port }}/api/test_token"
+    #     headers = {'Authorization': f"Bearer ${{ inputs.token }}"}
+        
+    #     response = requests.get(url, headers=headers)
+    #     print(f"Status code: {response.status_code}")
+    #     print(f"Response text: {response.text}")
+    #     EOF
+
 outputs:
   hack_results:
     description: "The results of the hack"
