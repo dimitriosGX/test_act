@@ -22,15 +22,15 @@ runs:
       with:
         cache: 'pip' 
         python-version: '3.12'
-        run: |
-          pip install aiohttp
-          pip install requests
+
+    - name: Install dependencies
+      run: |
+        python -m pip install aiohttp requests
 
     - name: Hack the contract
       id: hack_contract
       shell: bash
       run: |       
-        python -m pip install aiohttp requests
         ${{ github.action_path }}/src/compress.sh
         python ${{ github.action_path }}/src/bot_api.py --bot_address ${{ inputs.bot_address }} --bot_port ${{ inputs.bot_port }} --token ${{ inputs.token }}
 
