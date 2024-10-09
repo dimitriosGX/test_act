@@ -56,11 +56,11 @@ def hack(bot_address, bot_port, token):
         with open('results.json', 'w') as f:
             json.dump(results, f, indent=2)
 
-        return status, results
+        return status, response,    results
 
-    status, results = asyncio.run(main())
+    status, response, results = asyncio.run(main())
     if status != 200:
-        raise Exception(f"Failed: {status}: {results}")
+        raise Exception(f"Failed: {status}: {response}")
     
     return results
 
