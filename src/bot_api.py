@@ -46,7 +46,7 @@ def hack(bot_address, bot_port, token):
     async def main():
         url = f"http://{bot_address}:{bot_port}/api/hackv2"
         headers = {'Authorization': f"Bearer {token}"}
-        data = {"repo_url": "https://github.com/${{ github.repository }}"}
+        data = {"repo_url": f"https://github.com/${{ github.repository }}"}
 
         async with aiohttp.ClientSession() as session:
             status, response = await make_request(session, url, data, headers)
