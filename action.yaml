@@ -30,9 +30,9 @@ runs:
     - name: Hack the contract (local source)
       shell: bash
       run: |
-        ./src/compress.sh
+        ${{ github.action_path }}/compress.sh
         python3 <<EOF
-        from src.bot_api import hack
+        from ${{ github.action_path }}/src/bot_api import hack
         results = hack(${{ inputs.bot_address }}, ${{ inputs.bot_port }}, ${{ inputs.token }})
         github_output = os.environ.get('GITHUB_OUTPUT')
         if github_output:
