@@ -37,10 +37,16 @@ runs:
       shell: bash
       run: |       
         ${{ github.action_path }}/src/compress.sh
-        echo "results<<EOF" >> $GITHUB_OUTPUT
         python ${{ github.action_path }}/src/bot_api.py \
           --bot_address ${{ inputs.bot_address }} \
           --bot_port ${{ inputs.bot_port }} \
-          --token ${{ inputs.token }} >> $GITHUB_OUTPUT
-        echo "EOF" >> $GITHUB_OUTPUT
+          --token ${{ inputs.token }}
+        mkdir logs
+        mv results.json logs/results.json
 
+    - name: Upload logs
+      uses: actions/upload-artifact@v4
+      with:
+        name: hack-logs
+        path: logs
+      retention-days:90
