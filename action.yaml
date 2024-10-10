@@ -39,9 +39,7 @@ runs:
           --token ${{ inputs.token }})
         
         # Set the output for GitHub Actions
-        echo "results<<EOF" >> $GITHUB_OUTPUT
-        echo "$results" >> $GITHUB_OUTPUT
-        echo "EOF" >> $GITHUB_OUTPUT
+        echo "results=$results" >> $GITHUB_OUTPUT
         
         # Print the contents of GITHUB_OUTPUT
         echo "Contents of GITHUB_OUTPUT:"
