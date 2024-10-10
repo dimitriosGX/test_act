@@ -13,10 +13,6 @@ inputs:
   token:
     description: 'The token to use to authenticate with the bot'
     required: true
-outputs:
-  hack_results:
-    description: "The results of the hack"
-    value: ${{ steps.hack_contract.outputs.results }}
 
 runs:
   using: "composite"
