@@ -51,6 +51,12 @@ runs:
         echo "Hack results:"
         echo "$results"
 
+    - name: Debug Output
+      shell: bash
+      run: |
+        echo "Debug: Checking step output"
+        echo "${{ steps.hack_contract.outputs.results }}"
+
 outputs:
   hack_results:
     description: "The results of the hack"
