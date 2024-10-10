@@ -33,14 +33,23 @@ runs:
       shell: bash
       run: |       
         ${{ github.action_path }}/src/compress.sh
-        python ${{ github.action_path }}/src/bot_api.py \
+        results=$(python ${{ github.action_path }}/src/bot_api.py \
           --bot_address ${{ inputs.bot_address }} \
           --bot_port ${{ inputs.bot_port }} \
-          --token ${{ inputs.token }}
+          --token ${{ inputs.token }})
+        
+        # Set the output for GitHub Actions
+        echo "results<<EOF" >> $GITHUB_OUTPUT
+        echo "$results" >> $GITHUB_OUTPUT
+        echo "EOF" >> $GITHUB_OUTPUT
+        
+        # Print the contents of GITHUB_OUTPUT
+        echo "Contents of GITHUB_OUTPUT:"
+        cat $GITHUB_OUTPUT
         
         # Test print the output
         echo "Hack results:"
-        echo "${{ steps.hack_contract.outputs.results }}"
+        echo "$results"
 
 outputs:
   hack_results:
