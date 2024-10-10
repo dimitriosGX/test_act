@@ -49,4 +49,4 @@ runs:
       with:
         name: hack-logs
         path: logs
-      retention-days:90
+        retention-days: 90
