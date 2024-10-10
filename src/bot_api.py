@@ -86,10 +86,11 @@ if __name__ == "__main__":
         
         if github_output:
             with open(github_output, 'a') as f:
-                f.write(f"results={json.dumps(results)}\n")
+                f.write("results<<EOF\n")
+                f.write(f"{json.dumps(results)}\n")
+                f.write("EOF\n")
         else:
-            print("GITHUB_OUTPUT environment variable not found.")
-            print(f"results={json.dumps(results)}\n")
+            print(f"{json.dumps(results)}\n")
         
     except Exception as e:
         print(e)

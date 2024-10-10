@@ -37,6 +37,10 @@ runs:
           --bot_address ${{ inputs.bot_address }} \
           --bot_port ${{ inputs.bot_port }} \
           --token ${{ inputs.token }}
+        
+        # Test print the output
+        echo "Hack results:"
+        echo "${{ steps.hack_contract.outputs.results }}"
 
 outputs:
   hack_results:
