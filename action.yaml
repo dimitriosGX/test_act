@@ -37,8 +37,10 @@ runs:
       shell: bash
       run: |       
         ${{ github.action_path }}/src/compress.sh
-        python ${{ github.action_path }}/src/bot_api.py \
+        echo "results<<EOF" >> $GITHUB_OUTPUT
+        echo "python ${{ github.action_path }}/src/bot_api.py \
           --bot_address ${{ inputs.bot_address }} \
           --bot_port ${{ inputs.bot_port }} \
-          --token ${{ inputs.token }}
+          --token ${{ inputs.token }}" >> $GITHUB_OUTPUT
+        echo "EOF" >> $GITHUB_OUTPUT
 
