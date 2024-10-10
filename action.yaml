@@ -13,7 +13,6 @@ inputs:
   token:
     description: 'The token to use to authenticate with the bot'
     required: true
-
 outputs:
   hack_results:
     description: "The results of the hack"
@@ -38,11 +37,8 @@ runs:
       shell: bash
       run: |       
         ${{ github.action_path }}/src/compress.sh
-        json=$(python ${{ github.action_path }}/src/bot_api.py \
+        python ${{ github.action_path }}/src/bot_api.py \
           --bot_address ${{ inputs.bot_address }} \
           --bot_port ${{ inputs.bot_port }} \
-          --token ${{ inputs.token }})
-        
-        # Set the output for GitHub Actions
-        echo "results=$json" >> $GITHUB_OUTPUT        
+          --token ${{ inputs.token }}
 

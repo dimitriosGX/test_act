@@ -81,7 +81,14 @@ if __name__ == "__main__":
     try:
         results = hack(args.bot_address, args.bot_port, args.token)
         
-        print(f"{json.dumps(results)}\n")
+        # Get GITHUB_OUTPUT environment variable
+        github_output = os.environ.get('GITHUB_OUTPUT')
+        
+        if github_output:
+            with open(github_output, 'a') as f:
+                f.write(f"results={json.dumps(results)}\n")
+        else:
+            print(f"{json.dumps(results)}\n")
         
     except Exception as e:
         print(e)
