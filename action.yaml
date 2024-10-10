@@ -14,6 +14,11 @@ inputs:
     description: 'The token to use to authenticate with the bot'
     required: true
 
+outputs:
+  hack_results:
+    description: "The results of the hack"
+    value: ${{ steps.hack_contract.outputs.results }}
+
 runs:
   using: "composite"
   steps:
@@ -33,29 +38,11 @@ runs:
       shell: bash
       run: |       
         ${{ github.action_path }}/src/compress.sh
-        results=$(python ${{ github.action_path }}/src/bot_api.py \
+        json=$(python ${{ github.action_path }}/src/bot_api.py \
           --bot_address ${{ inputs.bot_address }} \
           --bot_port ${{ inputs.bot_port }} \
           --token ${{ inputs.token }})
         
         # Set the output for GitHub Actions
-        echo "results=$results" >> $GITHUB_OUTPUT
-        
-        # Print the contents of GITHUB_OUTPUT
-        echo "Contents of GITHUB_OUTPUT:"
-        cat $GITHUB_OUTPUT
-        
-        # Test print the output
-        echo "Hack results:"
-        echo "$results"
+        echo "results=$json" >> $GITHUB_OUTPUT        
 
-    - name: Debug Output
-      shell: bash
-      run: |
-        echo "Debug: Checking step output"
-        echo "${{ steps.hack_contract.outputs.results }}"
-
-outputs:
-  hack_results:
-    description: "The results of the hack"
-    value: ${{ steps.hack_contract.outputs.results }}
