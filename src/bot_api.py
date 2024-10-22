@@ -5,95 +5,141 @@ import json
 import argparse
 import requests
 
-
-def test_token(bot_address, bot_port, token):
-    url = f"http://{bot_address}:{bot_port}/api/token"
-    headers = {"Authorization": f"Bearer {token}"}
+def authenticate(address, port, api_key):
+    url = f"http://{address}:{port}/api/authenticate"
+    headers = {"X-API-KEY": f"{api_key}"}
     response = requests.get(url, headers=headers)
     if response.status_code == 200:
         return True
     else:
         raise Exception(f"Failed: {response.status_code}")
 
-
-def transfer(bot_address, bot_port, token):
-
-    url = f"http://{bot_address}:{bot_port}/api/transfer"
-    headers = {"Authorization": f"Bearer {token}"}
-    files = {"file": ("src.zip", open("src.zip", "rb"), "application/zip")}
-    data = {"repo_url": f"https://github.com/${{ github.repository }}"}
-
-    response = requests.post(url, files=files, data=data, headers=headers)
-    if response.status_code != 200:
-        raise Exception(f"Failed: {response.status_code}: {response.text}")
-
-
-def hack(bot_address, bot_port, token):
-    async def make_request(session, url, data, headers):
-        headers["Content-Type"] = "application/json"
-        async with session.post(url, json=data, headers=headers) as response:
-            return response.status, await response.text()
-
-    async def process_ndjson(ndjson_str):
+def hack(address, port, api_key, output):
+    async def process_stream(response):
         results = []
-        for line in ndjson_str.strip().split("\n"):
+        async for line in response.content:
+            line = line.decode("utf-8")
             if line.startswith("data: "):
                 try:
                     json_str = line[5:].strip()  # Remove 'data: ' prefix
+                    # Stream to stdout
+                    print(f"{json_str}")
                     json_obj = json.loads(json_str)
                     results.append(json_obj)
                 except json.JSONDecodeError:
                     print(f"Failed to parse JSON: {json_str}")
         return results
 
+    async def make_request(session, url, data, headers):
+        async with session.post(url, data=data, headers=headers) as response:
+            return response.status, await process_stream(response)
+
     async def main():
-        url = f"http://{bot_address}:{bot_port}/api/hackv2"
-        headers = {"Authorization": f"Bearer {token}"}
-        data = {"repo_url": f"https://github.com/${{ github.repository }}"}
+        url = f"http://{address}:{port}/api/hack"
+        headers = {"X-API-KEY": f"{api_key}", "Connection": "keep-alive"}
+
+        data = aiohttp.FormData()
+        data.add_field(
+            "file",
+            open("src.zip", "rb"),
+            filename="src.zip",
+            content_type="application/zip",
+        )
+        data.add_field("repo_url", f"https://github.com/${{github.repository}}")
 
         async with aiohttp.ClientSession() as session:
             status, response = await make_request(session, url, data, headers)
-            results = await process_ndjson(response)
+            results = response
 
-            # Append each result to a JSON file
-        with open("results.json", "w") as f:
-            json.dump(results, f, indent=2)
+        if output is not None:
+            # Check if the output contains a directory
+            output_dir = os.path.dirname(output)
+            if output_dir and not os.path.exists(output_dir):
+                try:
+                    os.makedirs(output_dir, exist_ok=True)
+                    # Append each result to a JSON file
+                except OSError as e:
+                    print(f"Error creating output file {output}: {e}")
 
-        return status, response, results
+            with open(output, "w") as f:
+                json.dump(response, f, indent=2)
+        return status, response
 
-    status, response, results = asyncio.run(main())
+    status, response = asyncio.run(main())
     if status != 200:
         raise Exception(f"Failed: {status}: {response}")
 
-    return results
+    return response
 
 
 if __name__ == "__main__":
-
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--bot_address", type=str, required=True)
-    parser.add_argument("--bot_port", type=str, required=True)
-    parser.add_argument("--token", type=str, required=True)
+    parser = argparse.ArgumentParser(
+        description="Hackbot API client for interacting with the bot server."
+    )
+    parser.add_argument(
+        "--address", type=str, required=True, help="The address of the bot server."
+    )
+    parser.add_argument(
+        "--port", type=str, required=True, help="The port number of the bot server."
+    )
+    parser.add_argument(
+        "--api_key",
+        type=str,
+        required=True,
+        help="API key for authentication with the bot server.",
+    )
+    parser.add_argument(
+        "--output",
+        type=str,
+        required=False,
+        help="Path to the output file for storing results.",
+    )
+    parser.add_argument(
+        "--authenticate",
+        action="store_true",
+        default=False,
+        help="Perform authentication only without hacking.",
+    )
     args = parser.parse_args()
 
+    # Get GITHUB_OUTPUT environment variable
+    github_output = os.environ.get("GITHUB_OUTPUT")
+
+    # Print program CLI header
+    print("=" * 50)
+    print("Hackbot API Client")
+    print(f"Server: {args.address}:{args.port}")
+    print(f"API Key: {'Set' if args.api_key else 'Not set'}")
+    print(f"Output: {args.output if args.output else 'Not specified'}")
+    print(f"Authentication only: {'Yes' if args.authenticate else 'No'}")
+    print(f"Is GitHub Actions: {'Yes' if github_output else 'No'}")
+    print("=" * 50)
+    print()
+
+    # Try the credentials before doing anything else
     try:
-        transfer(args.bot_address, args.bot_port, args.token)
+        authenticate(args.address, args.port, args.api_key)
+        print("Authentication successful")
     except Exception as e:
         print(e)
         exit(1)
 
-    try:
-        results = hack(args.bot_address, args.bot_port, args.token)
+    # If we only want to authenticate, we can exit here
+    if args.authenticate:
+        exit(0)
 
-        # Get GITHUB_OUTPUT environment variable
-        github_output = os.environ.get("GITHUB_OUTPUT")
+    # Hack the contract
+    try:
+        results = hack(
+            address=args.address,
+            port=args.port,
+            api_key=args.api_key,
+            output=args.output,
+        )
 
         if github_output:
             with open(github_output, "a") as f:
                 f.write(f"results={json.dumps(results)}\n")
-        else:
-            print("GITHUB_OUTPUT environment variable not found.")
-            print(f"results={json.dumps(results)}\n")
 
     except Exception as e:
         print(e)

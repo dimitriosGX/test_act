@@ -2,17 +2,24 @@ name: 'Hackbot CI'
 description: 'Hackbot action'
 
 inputs:
-  bot_address:
+  address:
     description: 'The address of the bot to hack'
     required: false
     default: 'localhost'
-  bot_port:
+  port:
     description: 'The port of the bot to hack'
     required: false
     default: '5000'
-  token:
-    description: 'The token to use to authenticate with the bot'
+  api_key:
+    description: 'The API key to use to authenticate with the bot'
     required: true
+  output:
+    description: 'The output file to write the results to'
+    required: false
+  artifact:
+    description: 'Whether to upload the logs as an artifact'
+    required: false
+    default: false
 
 runs:
   using: "composite"
@@ -34,15 +41,21 @@ runs:
       run: |       
         ${{ github.action_path }}/src/compress.sh
         python ${{ github.action_path }}/src/bot_api.py \
-          --bot_address ${{ inputs.bot_address }} \
-          --bot_port ${{ inputs.bot_port }} \
-          --token ${{ inputs.token }}
-        mkdir logs
-        mv results.json logs/results.json
+          --address ${{ inputs.bot_address }} \
+          --port ${{ inputs.bot_port }} \
+          --api_key ${{ inputs.api_key }}
+          --output ${{ inputs.output }}
+
+    - name: Move logs
+      if: inputs.artifact == true
+      run: |
+        mkdir hb_logs
+        mv ${{ inputs.output }} hb_logs/${{ inputs.output }}
 
     - name: Upload logs
+      if: inputs.artifact == true
       uses: actions/upload-artifact@v4
       with:
         name: hack-logs
-        path: logs
+        path: hb_logs
         retention-days: 90
