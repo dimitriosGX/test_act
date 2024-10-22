@@ -50,6 +50,10 @@ def generate_github_issues(issues, github_api_key, github_repo):
                 print(f"Error creating issue: {e}")
                 if e.status == 422:
                     raise Exception(f"Validation failed, aborting. This functionality requires a GITHUB_TOKEN with 'issues: write' in the workflow permissions section.")
+                elif e.status == 403:
+                    raise Exception(f"Forbidden, aborting. This functionality requires a GITHUB_TOKEN with 'issues: write' in the workflow permissions section.")
+                elif e.status == 410:
+                    raise Exception(f"Gone, aborting. The repository does not allow issues.")
 
 def authenticate(address, port, api_key):
     url = f"http://{address}:{port}/api/authenticate"
