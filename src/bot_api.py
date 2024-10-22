@@ -140,7 +140,7 @@ if __name__ == "__main__":
 
         if github_output:
             with open(github_output, "a") as f:
-                compact_json = jq.compile('.').input(results).text()
+                compact_json = jq.compile('.').input(json.dumps(results)).text()
                 f.write(f"results={compact_json}\n")
 
         # Print the contents of github_output
