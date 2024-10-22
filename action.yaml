@@ -66,3 +66,8 @@ runs:
         name: hack-logs
         path: hb_logs
         retention-days: 90
+
+    - name: Print results
+      shell: bash
+      run: |
+        echo '${{ steps.hack_contract.outputs.results }}' | jq -ca
