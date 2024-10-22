@@ -107,12 +107,12 @@ if __name__ == "__main__":
 
     # Print program CLI header
     print("=" * 50)
-    print("Hackbot API Client")
+    print(f"Hackbot {'CI Action' if github_output else 'API Client'}")
     print(f"Server: {args.address}:{args.port}")
     print(f"API Key: {'Set' if args.api_key else 'Not set'}")
     print(f"Output: {args.output if args.output else 'Not specified'}")
-    print(f"Authentication only: {'Yes' if args.authenticate else 'No'}")
-    print(f"Is GitHub Actions: {'Yes' if github_output else 'No'}")
+    if args.authenticate:
+        print(f"Authentication only")
     print("=" * 50)
     print()
 
