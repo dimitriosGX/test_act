@@ -4,6 +4,7 @@ import asyncio
 import json
 import argparse
 import requests
+import jq
 
 def authenticate(address, port, api_key):
     url = f"http://{address}:{port}/api/authenticate"
@@ -139,7 +140,8 @@ if __name__ == "__main__":
 
         if github_output:
             with open(github_output, "a") as f:
-                f.write(f"results={json.dumps(results)}\n")
+                compact_json = jq.compile('.').input(results).text()
+                f.write(f"results={compact_json}\n")
 
         # Print the contents of github_output
         if github_output:
