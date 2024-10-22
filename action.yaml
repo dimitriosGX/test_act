@@ -20,7 +20,7 @@ inputs:
     type: boolean
     description: 'Whether to upload the logs as an artifact'
     required: false
-    default: false
+    default: 'false'
 
 runs:
   using: "composite"
@@ -49,13 +49,13 @@ runs:
 
     - name: Move logs
       shell: bash
-      if: inputs.artifact == true
+      if: inputs.artifact == 'true'
       run: |
         mkdir hb_logs
         mv ${{ inputs.output }} hb_logs/${{ inputs.output }}
 
     - name: Upload logs
-      if: inputs.artifact == true
+      if: inputs.artifact == 'true'
       uses: actions/upload-artifact@v4
       with:
         name: hack-logs
