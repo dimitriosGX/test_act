@@ -70,8 +70,6 @@ runs:
     - name: Print results
       shell: bash
       run: |
-        echo "Contents of GITHUB_OUTPUT:"
-        cat $GITHUB_OUTPUT
         echo "---"
         echo "Attempting to parse and print results:"
         python -c "
