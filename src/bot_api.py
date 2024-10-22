@@ -45,7 +45,7 @@ def generate_github_issues(issues, github_api_key, github_repo):
                 print(f"Issue {title} already exists in an open state, skipping")
                 continue
             try:
-                repo.create_issue(title=title, body=body, assignee="hackbot_ci")
+                repo.create_issue(title=title, body=body)
             except GithubException as e:
                 print(f"Error creating issue: {e}")
                 if e.status == 422:
