@@ -70,4 +70,4 @@ runs:
     - name: Print results
       shell: bash
       run: |
-        echo '${{ steps.hack_contract.outputs.results }}' | jq -ca
+        jq -n --arg results "${{ steps.hack_contract.outputs.results }}" '$results' | jq -c '.'
