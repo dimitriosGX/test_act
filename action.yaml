@@ -70,4 +70,4 @@ runs:
     - name: Print results
       shell: bash
       run: |
-        jq -n --arg results "${{ steps.hack_contract.outputs.results }}" '$results' | jq -c '.'
+        python -c "import json, os; print(json.dumps(json.loads(os.environ['GITHUB_OUTPUT'].split('results=')[1].strip()), separators=(',', ':')))"
