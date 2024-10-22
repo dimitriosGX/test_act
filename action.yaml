@@ -52,12 +52,6 @@ runs:
           --api_key ${{ inputs.api_key }} \
           --output ${{ inputs.output }}
 
-    - name: Set results
-      shell: bash
-      run: |
-        echo "HB output: ${{ steps.hack_contract.outputs.results }}"
-        echo "results=${{ steps.hack_contract.outputs.results }}" >> $GITHUB_OUTPUT 
-
     - name: Move logs
       shell: bash
       if: inputs.artifact == 'true'
