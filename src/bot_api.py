@@ -141,6 +141,12 @@ if __name__ == "__main__":
             with open(github_output, "a") as f:
                 f.write(f"results={json.dumps(results)}\n")
 
+        # Print the contents of github_output
+        if github_output:
+            print("Contents of GITHUB_OUTPUT:")
+            with open(github_output, "r") as f:
+                print(f.read())
+
     except Exception as e:
         print(e)
         exit(1)
