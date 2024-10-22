@@ -70,4 +70,24 @@ runs:
     - name: Print results
       shell: bash
       run: |
-        python -c "import json, os; print(json.dumps(json.loads(os.environ['GITHUB_OUTPUT'].split('results=')[1].strip()), separators=(',', ':')))"
+        echo "Contents of GITHUB_OUTPUT:"
+        cat $GITHUB_OUTPUT
+        echo "---"
+        echo "Attempting to parse and print results:"
+        python -c "
+import json, os, re
+
+github_output = os.environ.get('GITHUB_OUTPUT', '')
+results_match = re.search(r'results=(.+)', github_output, re.DOTALL)
+
+if results_match:
+    results_json = results_match.group(1).strip()
+    try:
+        parsed_results = json.loads(results_json)
+        print(json.dumps(parsed_results, separators=(',', ':')))
+    except json.JSONDecodeError as e:
+        print(f'Error parsing JSON: {e}')
+        print(f'Raw results string: {results_json}')
+else:
+    print('Could not find results in GITHUB_OUTPUT')
+        "
