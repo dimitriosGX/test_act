@@ -47,6 +47,7 @@ runs:
           --output ${{ inputs.output }}
 
     - name: Move logs
+      shell: bash
       if: inputs.artifact == true
       run: |
         mkdir hb_logs
