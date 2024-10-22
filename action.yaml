@@ -17,6 +17,7 @@ inputs:
     description: 'The output file to write the results to'
     required: false
   artifact:
+    type: boolean
     description: 'Whether to upload the logs as an artifact'
     required: false
     default: false
