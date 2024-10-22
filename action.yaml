@@ -66,12 +66,14 @@ runs:
     - name: Move logs
       shell: bash
       if: inputs.artifact == 'true'
+      continue-on-error: true
       run: |
         mkdir hb_logs
         mv ${{ inputs.output }} hb_logs/${{ inputs.output }}
 
     - name: Upload logs
       if: inputs.artifact == 'true'
+      continue-on-error: true
       uses: actions/upload-artifact@v4
       with:
         name: hack-logs
