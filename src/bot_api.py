@@ -152,8 +152,9 @@ def handle_options():
     issue_parser = parser.add_argument_group("Issue Generation Options")
     issue_parser.add_argument(
         "--generate_issues",
-        action="store_true",
-        help="Generate issues based on the hack results",
+        type=lambda x: x.lower() in ['true', 'false'],
+        default='false',
+        help="Generate issues based on the hack results (true/false)",
     )
     issue_parser.add_argument(
         "--issues_repo",
@@ -168,7 +169,7 @@ def handle_options():
     args = parser.parse_args()
 
     # Add validation for issue generation options
-    if args.generate_issues:
+    if args.generate_issues == 'true':
         if not args.issues_repo:
             parser.error("--issues_repo is required when --generate_issues is set")
         if not args.github_api_key:
@@ -190,7 +191,7 @@ if __name__ == "__main__":
     print(f"Server: {args.address}:{args.port}")
     print(f"API Key: {'Set' if args.api_key else 'Not set'}")
     print(f"Output: {args.output if args.output else 'Not specified'}")
-    if args.generate_issues:
+    if args.generate_issues == 'true':
         print(f"Issue Generation: {args.issues_repo}")
     if args.authenticate:
         print("Authentication only")
@@ -233,7 +234,7 @@ if __name__ == "__main__":
         print(e)
         exit(1)
 
-    if args.generate_issues:
+    if args.generate_issues == 'true':
         try:
             generate_github_issues(results, args.github_api_key, args.issues_repo)
         except Exception as e:
