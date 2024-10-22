@@ -6,6 +6,51 @@ import argparse
 import requests
 import jq
 
+def generate_github_issues(issues, github_api_key, github_repo):
+    print(f"Generate Issues: Set")
+    from github import Github
+    from github import GithubException
+    from github import Auth
+
+    auth = Auth.Token(github_api_key)
+    g = Github(auth=auth)
+
+    if not github_repo:
+        print("Error: GitHub repository is not specified.")
+        return
+    
+    repo = None
+    try:
+        repo = g.get_repo(github_repo)
+    except GithubException as e:
+        print(f"Error accessing repository: {e}")
+        return
+    
+    # Create a dictionary to store existing issue titles and their corresponding issues
+    existing_issues = {}
+
+    # Fetch all existing issues in the repository
+    for issue in repo.get_issues(state='all'):
+        existing_issues[issue.title] = issue
+
+    print(f"Found {len(existing_issues)} existing issues in the repository.")
+
+    for issue in issues:
+        id = issue.get("bug_id")
+        if id is not None:
+            title = issue.get("bug_title")
+            body = issue.get("bug_description")
+            print(f"Creating issue: {title}")
+            if title in existing_issues.keys() and existing_issues[title].state == "open":
+                print(f"Issue {title} already exists in an open state, skipping")
+                continue
+            try:
+                repo.create_issue(title=title, body=body, assignee="hackbot_ci")
+            except GithubException as e:
+                print(f"Error creating issue: {e}")
+                if e.status == 422:
+                    raise Exception(f"Validation failed, aborting. This functionality requires a GITHUB_TOKEN with 'issues: write' in the workflow permissions section.")
+
 def authenticate(address, port, api_key):
     url = f"http://{address}:{port}/api/authenticate"
     headers = {"X-API-KEY": f"{api_key}"}
@@ -14,6 +59,7 @@ def authenticate(address, port, api_key):
         return True
     else:
         raise Exception(f"Failed: {response.status_code}")
+
 
 def hack(address, port, api_key, output):
     async def process_stream(response):
@@ -64,6 +110,7 @@ def hack(address, port, api_key, output):
 
             with open(output, "w") as f:
                 json.dump(response, f, indent=2)
+
         return status, response
 
     status, response = asyncio.run(main())
@@ -72,8 +119,7 @@ def hack(address, port, api_key, output):
 
     return response
 
-
-if __name__ == "__main__":
+def handle_options():
     parser = argparse.ArgumentParser(
         description="Hackbot API client for interacting with the bot server."
     )
@@ -101,7 +147,39 @@ if __name__ == "__main__":
         default=False,
         help="Perform authentication only without hacking.",
     )
+
+    # Create a subparser for the issue generation options
+    issue_parser = parser.add_argument_group("Issue Generation Options")
+    issue_parser.add_argument(
+        "--generate_issues",
+        action="store_true",
+        help="Generate issues based on the hack results",
+    )
+    issue_parser.add_argument(
+        "--issues_repo",
+        type=str,
+        help="The repository to generate issues in (format: username/repo)",
+    )
+    issue_parser.add_argument(
+        "--github_api_key",
+        type=str,
+        help="GitHub API key for issue generation",
+    )
     args = parser.parse_args()
+
+    # Add validation for issue generation options
+    if args.generate_issues:
+        if not args.issues_repo:
+            parser.error("--issues_repo is required when --generate_issues is set")
+        if not args.github_api_key:
+            parser.error("--github_api_key is required when --generate_issues is set")
+
+    return args
+
+
+if __name__ == "__main__":
+    
+    args = handle_options()
 
     # Get GITHUB_OUTPUT environment variable
     github_output = os.environ.get("GITHUB_OUTPUT")
@@ -112,8 +190,10 @@ if __name__ == "__main__":
     print(f"Server: {args.address}:{args.port}")
     print(f"API Key: {'Set' if args.api_key else 'Not set'}")
     print(f"Output: {args.output if args.output else 'Not specified'}")
+    if args.generate_issues:
+        print(f"Issue Generation: {args.issues_repo}")
     if args.authenticate:
-        print(f"Authentication only")
+        print("Authentication only")
     print("=" * 50)
     print()
 
@@ -135,12 +215,12 @@ if __name__ == "__main__":
             address=args.address,
             port=args.port,
             api_key=args.api_key,
-            output=args.output,
+            output=args.output
         )
 
         if github_output:
             with open(github_output, "a") as f:
-                compact_json = jq.compile('.').input(json.dumps(results)).text()
+                compact_json = jq.compile(".").input(json.dumps(results)).text()
                 f.write(f"results={compact_json}\n")
 
         # Print the contents of github_output
@@ -152,3 +232,10 @@ if __name__ == "__main__":
     except Exception as e:
         print(e)
         exit(1)
+
+    if args.generate_issues:
+        try:
+            generate_github_issues(results, args.github_api_key, args.issues_repo)
+        except Exception as e:
+            print(e)
+            exit(1)

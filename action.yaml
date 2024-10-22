@@ -3,24 +3,32 @@ description: 'Hackbot action'
 
 inputs:
   address:
-    description: 'The address of the bot to hack'
+    description: 'The address of the hackbot service'
     required: false
     default: 'localhost'
   port:
-    description: 'The port of the bot to hack'
+    description: 'The port of the hackbot service'
     required: false
     default: '5000'
   api_key:
-    description: 'The API key to use to authenticate with the bot'
+    description: 'The API key to use to authenticate with the hackbot service'
     required: true
   output:
-    description: 'The output file to write the results to'
+    description: 'The output file to write the results to. It can contain folder paths.'
     required: false
   artifact:
     type: boolean
     description: 'Whether to upload the logs as an artifact'
     required: false
     default: 'false'
+  generate_issues:
+    type: boolean
+    description: 'Whether to generate issues with the results'
+    required: false
+    default: 'false'
+  issues_repo:
+    description: 'The repository to generate issues in. It should be in the format of "username/repo"'
+    required: false
 
 outputs:
   results:
@@ -39,7 +47,7 @@ runs:
     - name: Install dependencies
       shell: bash
       run: |
-        python -m pip install aiohttp requests jq
+        python -m pip install aiohttp requests jq pygithub
 
     - name: Hack the contract
       id: hack_contract
@@ -50,7 +58,10 @@ runs:
           --address ${{ inputs.address }} \
           --port ${{ inputs.port }} \
           --api_key ${{ inputs.api_key }} \
-          --output ${{ inputs.output }}
+          --output ${{ inputs.output }} \
+          --generate_issues ${{ inputs.generate_issues }} \
+          --issues_repo ${{ inputs.issues_repo }} \
+          --github_api_key ${{ github.token }}
 
     - name: Move logs
       shell: bash
