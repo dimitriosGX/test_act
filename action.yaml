@@ -41,8 +41,8 @@ runs:
       run: |       
         ${{ github.action_path }}/src/compress.sh
         python ${{ github.action_path }}/src/bot_api.py \
-          --address ${{ inputs.bot_address }} \
-          --port ${{ inputs.bot_port }} \
+          --address ${{ inputs.address }} \
+          --port ${{ inputs.port }} \
           --api_key ${{ inputs.api_key }}
           --output ${{ inputs.output }}
 
