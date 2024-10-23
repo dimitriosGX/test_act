@@ -6,8 +6,30 @@ import argparse
 import requests
 import jq
 
-def generate_github_issues(issues, github_api_key, github_repo):
-    print(f"Generate Issues: Set")
+
+def generate_github_issues(issues, github_api_key, issues_repo):
+    """
+    Generate GitHub issues for bugs discovered by the bot.
+
+    This function creates a master issue in the specified GitHub repository
+    containing all the bugs found. It uses the GitHub API to create issues
+    and requires appropriate authentication and permissions.
+
+    Args:
+        issues (list): A list of dictionaries containing bug information.
+        github_api_key (str): The GitHub token for authentication.
+        issues_repo (str): The full name of the GitHub repository (e.g., "owner/repo").
+
+    Returns:
+        None
+
+    Raises:
+        Exception: If there are permission issues or other errors when interacting with the GitHub API.
+
+    Note:
+        - This function requires a GitHub token with 'issues: write' and 'contents: read' permissions.
+        - It creates a master issue with a title format of "HB-{number}".
+    """
     from github import Github
     from github import GithubException
     from github import Auth
@@ -15,45 +37,58 @@ def generate_github_issues(issues, github_api_key, github_repo):
     auth = Auth.Token(github_api_key)
     g = Github(auth=auth)
 
-    if not github_repo:
+    if not issues_repo:
         print("Error: GitHub repository is not specified.")
         return
-    
+
+    # Get a list of the bugs discovered by the bot
+    issues_found = [issue for issue in issues if issue.get("bug_id") is not None]
+    if len(issues_found) == 0:
+        print("No bugs found, skipping issue generation")
+        return
+
+    # Get the output repository. This will fail if the github token does not have access to the repository
     repo = None
     try:
-        repo = g.get_repo(github_repo)
+        repo = g.get_repo(issues_repo)
     except GithubException as e:
         print(f"Error accessing repository: {e}")
         return
-    
-    # Create a dictionary to store existing issue titles and their corresponding issues
-    existing_issues = {}
 
-    # Fetch all existing issues in the repository
-    for issue in repo.get_issues(state='all'):
-        existing_issues[issue.title] = issue
+    last_hb_issue = 0
+    # Fetch all existing issues in the repository and find the last one created by the bot
+    for issue in repo.get_issues(state="all"):
+        if issue.title.startswith("HB-"):
+            last_hb_issue = int(issue.title.split("-")[1])
+            break
 
-    print(f"Found {len(existing_issues)} existing issues in the repository.")
+    # Create a master issue in the repository that will contain all the bugs.
+    # This will fail if the github token does not have write access to the issues
+    # permissions:
+    # - issues: write
+    master_issue = None
+    try:
+        master_issue = repo.create_issue(title=f"HB-{last_hb_issue + 1}")
+    except GithubException as e:
+        print(f"Error creating issue: {e}")
+        if e.status == 422:
+            raise Exception(
+                "Validation failed, aborting. This functionality requires a GITHUB_TOKEN with 'issues: write' in the workflow permissions section."
+            )
+        elif e.status == 403:
+            raise Exception(
+                "Forbidden, aborting. This functionality requires a GITHUB_TOKEN with 'issues: write' in the workflow permissions section."
+            )
+        elif e.status == 410:
+            raise Exception("Gone, aborting. The repository does not allow issues.")
 
-    for issue in issues:
-        id = issue.get("bug_id")
-        if id is not None:
-            title = issue.get("bug_title")
-            body = issue.get("bug_description")
-            print(f"Creating issue: {title}")
-            if title in existing_issues.keys() and existing_issues[title].state == "open":
-                print(f"Issue {title} already exists in an open state, skipping")
-                continue
-            try:
-                repo.create_issue(title=title, body=body)
-            except GithubException as e:
-                print(f"Error creating issue: {e}")
-                if e.status == 422:
-                    raise Exception(f"Validation failed, aborting. This functionality requires a GITHUB_TOKEN with 'issues: write' in the workflow permissions section.")
-                elif e.status == 403:
-                    raise Exception(f"Forbidden, aborting. This functionality requires a GITHUB_TOKEN with 'issues: write' in the workflow permissions section.")
-                elif e.status == 410:
-                    raise Exception(f"Gone, aborting. The repository does not allow issues.")
+    # Add each bug as a comment to the master issue
+    for issue in issues_found:
+        body = f"#{issue.get('bug_id')} - {issue.get('bug_title')}\n{issue.get('bug_description')}"
+        master_issue.create_comment(body=body)
+
+    print(f"Created issue: {master_issue.title}")
+
 
 def authenticate(address, port, api_key):
     url = f"http://{address}:{port}/api/authenticate"
@@ -65,7 +100,22 @@ def authenticate(address, port, api_key):
         raise Exception(f"Failed: {response.status_code}")
 
 
-def hack(address, port, api_key, output):
+def hack(address: str, port: int, api_key: str, output: str):
+    """
+    Call the hackbot service on the received source code.
+
+    Args:
+        address (str): The ip address of the hackbot service.
+        port (int): The port number of the hackbot service.
+        api_key (str): The API key for authentication.
+        output (str): The file path to save the output results.
+    Returns:
+        tuple: A tuple containing the status code and response data.
+
+    Raises:
+        Exception: If there's an error during the hacking process.
+    """
+
     async def process_stream(response):
         results = []
         async for line in response.content:
@@ -86,6 +136,7 @@ def hack(address, port, api_key, output):
             return response.status, await process_stream(response)
 
     async def main():
+        # Create the API call for the hackbot service
         url = f"http://{address}:{port}/api/hack"
         headers = {"X-API-KEY": f"{api_key}", "Connection": "keep-alive"}
 
@@ -96,12 +147,13 @@ def hack(address, port, api_key, output):
             filename="src.zip",
             content_type="application/zip",
         )
-        data.add_field("repo_url", f"https://github.com/${{github.repository}}")
+        data.add_field("repo_url", "https://github.com/not_impemented")
 
+        # Make the request to the hackbot service
         async with aiohttp.ClientSession() as session:
             status, response = await make_request(session, url, data, headers)
-            results = response
 
+        # Save the results to a file if the output path is specified
         if output is not None:
             # Check if the output contains a directory
             output_dir = os.path.dirname(output)
@@ -122,6 +174,7 @@ def hack(address, port, api_key, output):
         raise Exception(f"Failed: {status}: {response}")
 
     return response
+
 
 def handle_options():
     parser = argparse.ArgumentParser(
@@ -156,7 +209,7 @@ def handle_options():
     issue_parser = parser.add_argument_group("Issue Generation Options")
     issue_parser.add_argument(
         "--generate_issues",
-        type=lambda x: x.lower() == 'true',
+        type=lambda x: x.lower() == "true",
         default=False,
         help="Generate issues based on the hack results (true/false)",
     )
@@ -183,7 +236,7 @@ def handle_options():
 
 
 if __name__ == "__main__":
-    
+
     args = handle_options()
 
     # Get GITHUB_OUTPUT environment variable

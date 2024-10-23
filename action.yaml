@@ -1,5 +1,5 @@
 name: 'Hackbot CI'
-description: 'Hackbot action'
+description: 'Hackbot workflow action'
 
 inputs:
   address:
